@@ -1,8 +1,22 @@
 import os
+
+# print(os.environ['PATH'])
+
+os.environ['PATH'] = 'E:\Imfusion\ImFusion_Suite\Suite;E:\Imfusion\ImFusion_Suite\Suite\imfusion;E:\Imfusion\ImFusion_Suite\Suite\plugins;' + os.environ['PATH']
+# imfusion_suite = __import__("E:\\ImFusion\\ImFusion Suite\\Suite\\imfusion")
+print(os.environ['PATH'])
+import sys
+sys.path.append('E:\Imfusion\ImFusion_Suite\Suite;')
+# print(sys.path)
 import numpy as np
 import time
 import imfusion
-os.environ['PATH'] = '/usr/include/ImFusion/Ext/Eigen/src/plugins;/usr/include/ImFusion;' + os.environ['PATH']
+
+
+# os.environ['PATH'] = '/usr/include/ImFusion/Ext/Eigen/src/plugins;/usr/include/ImFusion;' + os.environ['PATH']
+
+# PYTHONUNBUFFERED = 1;
+# PYTHONPATH=%PYTHONPATH%;'E:\ImFusion\ImFusion Suite\Suite';
 
 class avg_tracking_positions:
     def stylus_transform(self, T_tool_tip):
@@ -45,5 +59,5 @@ if __name__ == '__main__':
 
 
     x = avg_tracking_positions()
-    x.main("/home/nandishounak/Documents/IFL/ImFusion_data/data_1905/Patient-01/data_0206/l1.imf", "/home/nandishounak/Documents/IFL/ImFusion_data/data_1905/Patient-01/data_0206/avg-pts1_new.txt")
+    x.main("E:\IFL\data_0206\l1.imf", "E:\IFL\data_0206\_avgpts1_new.txt")
     x.stylus_transform(np.array([[-18.6831], [0.0823379], [-157.464], [1]]))
