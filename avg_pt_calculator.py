@@ -1,24 +1,38 @@
-import os
-
+# import os
+#
+# # print(os.environ['PATH'])
+#
+# os.environ['PATH'] = 'C:\\Program Files\\ImFusion\\ImFusion Suite\\Suite;C:\\Program Files\\ImFusion\\ImFusion Suite\\Suite\\plugins;' + os.environ['PATH']
+# # imfusion_suite = __import__("E:\\ImFusion\\ImFusion Suite\\Suite\\imfusion")
 # print(os.environ['PATH'])
+# import sys
+# sys.path.append('C:\\Program Files\\ImFusion\\ImFusion_Suite\\Suite;')
+# # print(sys.path)
 
-os.environ['PATH'] = 'E:\Imfusion\ImFusion_Suite\Suite;E:\Imfusion\ImFusion_Suite\Suite\imfusion;E:\Imfusion\ImFusion_Suite\Suite\plugins;' + os.environ['PATH']
-# imfusion_suite = __import__("E:\\ImFusion\\ImFusion Suite\\Suite\\imfusion")
-print(os.environ['PATH'])
-import sys
-sys.path.append('E:\Imfusion\ImFusion_Suite\Suite;')
-# print(sys.path)
-import numpy as np
-import time
-import imfusion
+# import imfusion
 
 
 # os.environ['PATH'] = '/usr/include/ImFusion/Ext/Eigen/src/plugins;/usr/include/ImFusion;' + os.environ['PATH']
 
 # PYTHONUNBUFFERED = 1;
 # PYTHONPATH=%PYTHONPATH%;'E:\ImFusion\ImFusion Suite\Suite';
+#########################################################
 
+#########################################################
+import os
+os.environ['PATH'] = 'C:\\Program Files\\ImFusion\\ImFusion Suite\\Suite;C:\\Program Files\\ImFusion\\ImFusion Suite\\Suite\\plugins;' + os.environ['PATH']
+os.environ['PYTHONPATH'] = os.environ['PYTHONPATH'] + ';C:\\Program Files\\ImFusion\\ImFusion Suite\\Suite;'+'E:\\IFL\\Imfusionenv\\venv\\Lib\\site-packages\\imfusion\\imfusion'
+# print(os.environ['PATH'])
+
+import sys
+sys.path.append("E:\\IFL\\Imfusionenv\\venv\\Lib\\site-packages\\imfusion\\imfusion")
+print (sys.path)
+import numpy as np
+import time
+import imfusion
 class avg_tracking_positions:
+    def __call__(self, *args, **kwargs):
+        return None;
     def stylus_transform(self, T_tool_tip):
         return T_tool_tip
     def get_tracking_positions(self, tracking_stream, stylus_transform):
