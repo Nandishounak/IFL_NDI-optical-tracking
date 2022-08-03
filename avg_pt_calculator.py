@@ -1,4 +1,8 @@
 import os
+os.environ['PATH'] = '/usr/include/ImFusion/Ext/Eigen/src/plugins;/usr/include/ImFusion;' + os.environ['PATH']
+
+import numpy as np
+import imfusion
 #
 # # print(os.environ['PATH'])
 #
@@ -9,10 +13,7 @@ import os
 # sys.path.append('C:\\Program Files\\ImFusion\\ImFusion_Suite\\Suite;')
 # # print(sys.path)
 
-# import imfusion
 
-
-os.environ['PATH'] = '/usr/include/ImFusion/Ext/Eigen/src/plugins;/usr/include/ImFusion;' + os.environ['PATH']
 
 # PYTHONUNBUFFERED = 1;
 # PYTHONPATH=%PYTHONPATH%;'E:\ImFusion\ImFusion Suite\Suite';
@@ -27,9 +28,6 @@ os.environ['PATH'] = '/usr/include/ImFusion/Ext/Eigen/src/plugins;/usr/include/I
 # import sys
 # sys.path.append("E:\\IFL\\Imfusionenv\\venv\\Lib\\site-packages\\imfusion\\imfusion")
 # print (sys.path)
-import numpy as np
-import time
-import imfusion
 class avg_tracking_positions:
     def __call__(self, *args, **kwargs):
         return None;
@@ -61,13 +59,22 @@ class avg_tracking_positions:
         print('filepath saving the avg pose', filepath)
         print('pc', pc, pc.shape)
         np.savetxt(filepath, pc[0:3,:])
+        point_matrix=[]
+        point_matrix.append(pc)
+        print('point matrix',point_matrix)
+        return point_matrix
+
+
 
     def main(self, calibrated_phantom_point_path, averaged_points_path, T):
 
         # Extracting the phantom landmark positions
         phantom_landmarks = self.average_points_positions(calibrated_phantom_point_path,T)
         print('phantom landmarks', phantom_landmarks)
-        self.save_point_cloud(phantom_landmarks, averaged_points_path)
+        pt_mat=self.save_point_cloud(phantom_landmarks, averaged_points_path)
+        return pt_mat
+
+
 
 if __name__ == '__main__':
     imfusion.init()
@@ -79,4 +86,5 @@ if __name__ == '__main__':
     # x.stylus_transform(np.array([[-18.6831], [0.0823379], [-157.464], [1]]))
     # x.get_tracking_positions(stytra)
     # print(stytra.shape)
-    x.main("/home/nandishounak/Documents/IFL/ImFusion_data/data_1905/Patient-01/data_0206/l1.imf", "/home/nandishounak/Documents/IFL/ImFusion_data/data_1905/Patient-01/data_0206/avg-pts-1-test.txt")
+    imfpath= "/home/nandishounak/Documents/IFL/ImFusion_data/data_1905/Patient-01/data_0206/l1.imf"
+    x.main("/home/nandishounak/Documents/IFL/ImFusion_data/data_1905/Patient-01/data_0206/l1.imf", "/home/nandishounak/Documents/IFL/ImFusion_data/data_1905/Patient-01/data_0206/avg-pts-1-test.txt", T)

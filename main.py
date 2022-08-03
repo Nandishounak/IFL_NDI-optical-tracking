@@ -1,62 +1,98 @@
 from avg_pt_calculator import *
-from pathlib import Path
+from find_stl_to_ndi_transform import *
+from Euler_angles import *
+import glob
+
 if __name__ == '__main__':
     #initialize imfusion packages
     imfusion.init()
 
 
-    # This is the path where all the files are stored.
-    imf_folder_path = "/home/nandishounak/Documents/IFL/ImFusionMhaExporter/imf_folder/"
+    # returns array of the paths of the imf files
+    imf_folder_path= ('/home/nandishounak/Documents/IFL/ImFusionMhaExporter/imf_folder/')
+    imf_array = []
+    for name in sorted(glob.glob('/home/nandishounak/Documents/IFL/ImFusionMhaExporter/imf_folder/*.imf')):
+        imf_array.append(name)
+    print(imf_array)
 
-    emptylist = []
-    paths = Path(imf_folder_path)
-    print('pathsorted', type(paths), paths)
-    for root, dirs, files in os.walk(paths):
-        # for file in files:
-            emptylist.append(dirs)
-            print('trying to print something')
-    print('finally i am here', (emptylist))
-    #store the filepaths in an array
-    arr_imf = []
-    for data_file in sorted(os.listdir(imf_folder_path)):
-        # print(("this is before printing datafile"))
-        arr_imf.append(data_file)
-        # print(("this is after printing datafile"))
-    print(arr_imf) #['l01.imf', 'l02.imf', 'l04.imf', 'l05.imf', 'l07.imf', 'l08.imf', 'l10.imf', 'l11.imf']
-
-    #create the empty .txt files for avergae point values to be stored after running the code
+#####['/home/nandishounak/Documents/IFL/ImFusionMhaExporter/imf_folder/l01.imf',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/imf_folder/l02.imf',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/imf_folder/l04.imf',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/imf_folder/l05.imf',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/imf_folder/l07.imf',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/imf_folder/l08.imf',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/imf_folder/l10.imf',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/imf_folder/l11.imf']
+######
+    #create the empty .txt files for average point values to be stored after running the code
     arr_avg_pts=[]
-    for x in range(9):
-        text = open(r"/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/" + str(x) + ".txt", 'w')
+    for txtfilecount in range(8):
+
+        text = open(r"/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/" + str(txtfilecount+1) + ".txt", 'w')
         text.close()
     avg_pts_folder="/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/"
-    for temp in sorted(os.listdir(avg_pts_folder)):
+    for temp in sorted(glob.glob('/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/*.txt')):
         arr_avg_pts.append(temp)
     print(arr_avg_pts) #['1.txt', '2.txt', '3.txt', '4.txt', '5.txt', '6.txt', '7.txt', '8.txt']
+#####['/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/0.txt',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/1.txt',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/2.txt',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/3.txt',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/4.txt',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/5.txt',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/6.txt',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/7.txt',
+    # '/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/8.txt']
+#####
 
-    #run the loop for computing all the points
-    for point_counter in range(len(arr_imf)):
+
+    #run the loop for extracting all the average points from imf tracking file
+    matrix = []
+
+    for point_counter in range(len(arr_avg_pts)):
 
         #initialize the average tracking positions class
         x = avg_tracking_positions()
 
         #load the T_tool_tip transform matrix file
-        # x.main("E:\IFL\data_0206\l1.imf", "E:\IFL\data_0206\_avgpts1_new.txt")
         T= np.loadtxt("/home/nandishounak/Documents/IFL/ImFusionMhaExporter/stylustransform.txt").reshape(4,1)
+
         #load the paths to the imf file generated from imfusion, the new file location where the average point matrix will be stored.
-        # x.main("/home/nandishounak/Documents/IFL/ImFusion_data/data_1905/Patient-01/data_0206/l1.imf", "/home/nandishounak/Documents/IFL/ImFusion_data/data_1905/Patient-01/data_0206/avg-pts-1-test.txt", T)
-        x.main(arr_imf[point_counter],
+        print('this is counter', point_counter)
+        temp_mat=x.main(imf_array[point_counter],
                arr_avg_pts[point_counter], T)
+        matrix.append(temp_mat)
+
+        print('this is counter', point_counter)
+
+    print('matrix in main',matrix)
+    #extract the matrix in correct form and export it
+    tempmat1= np.reshape(matrix, (4,8))
+    tempmat1= np.delete(tempmat1, 3, 1)
+    tempmat1= np.delete(tempmat1, 6, 1)
+    tempmat1= np.reshape(tempmat1, (8,3))
+    mat=tempmat1.T
+    print('matrix after slicing', mat, 'matrix shape', np.shape(mat))
+    text = open(r"/home/nandishounak/Documents/IFL/ImFusionMhaExporter/transforms_folder/" + "avg_pt_matrix_3x8.txt", 'w')
+    np.savetxt(text, mat)
+    text.close()
+
+    #now we compute the rigid transformation matrix
+    #Stl_landmark_matrix_3x8
 
 
 
-# folder = '/mnt/HDD1/shounak/test2'
+    #compute the rigid registration
+    rt = ndi_to_stl_transform()
+    rot_mat, translation_mat = rt.main("/home/nandishounak/Documents/IFL/ImFusionMhaExporter/transforms_folder/avg_pt_matrix_3x8.txt", "/home/nandishounak/Documents/IFL/ImFusionMhaExporter/transforms_folder/Stl_landmark_matrix_3x8.txt")
+    print('ndi to stl transform matrix',np.shape(rot_mat), np.shape(translation_mat))
+
+    #compute the Euler angles
+    angles = Euler_angles()
+    theta_x, theta_y, theta_z = angles.Euler(rot_mat)
+    print("angles in degrees- x, y, z ==>", theta_x, theta_y, theta_z)
 
 
-
-# # sorted_sub_folders = [name for name in os.listdir(folder) if os.path.isdir(os.path.join(folder, name))]
-# print(sorted_sub_folders)
-# print(type(sub_folders))
 
 
 
