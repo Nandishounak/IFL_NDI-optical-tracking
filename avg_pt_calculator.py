@@ -48,15 +48,15 @@ class avg_tracking_positions:
         point_list = []
         for tracking_stream in imfusion_tracking_streams:
             tracking_point = self.get_tracking_positions(tracking_stream, T)
-            print('tracking point', tracking_point)
+            # print('tracking point', tracking_point)
             point_list.append(np.mean(tracking_point, axis=0))
-        print('point list from get tracking positions after mean', point_list)
+        print('point list from get tracking positions after mean', '\n', point_list)
         return point_list
 
     def save_point_cloud(self, pc, filepath):
         if isinstance(pc, list):
             pc = np.stack(np.squeeze(pc, axis=0),axis=0)
-        print('filepath saving the avg pose', filepath)
+        print('filepath saving the avg points', filepath)
         print('pc', pc, pc.shape)
         np.savetxt(filepath, pc[0:3,:])
         point_matrix=[]
@@ -70,7 +70,7 @@ class avg_tracking_positions:
 
         # Extracting the phantom landmark positions
         phantom_landmarks = self.average_points_positions(calibrated_phantom_point_path,T)
-        print('phantom landmarks', phantom_landmarks)
+        print('phantom landmarks-->', '\n', phantom_landmarks)
         pt_mat=self.save_point_cloud(phantom_landmarks, averaged_points_path)
         return pt_mat
 

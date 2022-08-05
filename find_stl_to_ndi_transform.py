@@ -13,8 +13,8 @@ class ndi_to_stl_transform:
 
     def rigid_transform_3D(self, A, B):
         assert A.shape == B.shape
-        print('A.shape, B.shape', A.shape, B.shape)
-        print(('A',A, 'B',B))
+        # print('A.shape, B.shape', A.shape, B.shape)
+        # print(('A',A, 'B',B))
 
         num_rows, num_cols = A.shape
         if num_rows != 3:
@@ -26,21 +26,21 @@ class ndi_to_stl_transform:
 
         # find mean column wise
         centroid_A = np.mean(A, axis=1)
-        print('cenA \n', centroid_A, '\n')
+        # print('cenA \n', centroid_A, '\n')
         centroid_B = np.mean(B, axis=1)
-        print('cenB \n', centroid_B, '\n')
+        # print('cenB \n', centroid_B, '\n')
 
         # ensure centroids are 3x1
         centroid_A = centroid_A.reshape(-1, 1)
         centroid_B = centroid_B.reshape(-1, 1)
-        print('centroid A after reshape \n',centroid_A, '\n', 'centroid B afetr reshape \n', centroid_B,'\n' )
+        # print('centroid A after reshape \n',centroid_A, '\n', 'centroid B afetr reshape \n', centroid_B,'\n' )
 
         # subtract mean
         Am = A - centroid_A
         Bm = B - centroid_B
-        print('Am ->', Am,'\n', 'Bm->', Bm, '\n')
+        # print('Am ->', Am,'\n', 'Bm->', Bm, '\n')
         H = Am @ np.transpose(Bm)
-        print('H',H)
+        # print('H',H)
         # H = A @ np.transpose(B)
         # print('H', H)
 
@@ -52,7 +52,7 @@ class ndi_to_stl_transform:
         # find rotation
         U, S, Vt = np.linalg.svd(H)
         R = Vt.T @ U.T
-        print('U',U, '\n', 'S', S, '\n', 'Vt', Vt)
+        # print('U',U, '\n', 'S', S, '\n', 'Vt', Vt)
 
         # special reflection case
         if np.linalg.det(R) < 0:
@@ -61,7 +61,7 @@ class ndi_to_stl_transform:
             R = Vt.T @ U.T
 
         t = -R @ centroid_A + centroid_B
-        print('R, t', '\n', R, '\n', t, '\n')
+        print('Rotation, traslation', '\n', R, '\n', t, '\n')
         return R, t
 
 
@@ -71,7 +71,7 @@ class ndi_to_stl_transform:
         for i in range(tracking_stream.size()):
             point = np.squeeze(tracking_stream.matrix(i)[0:3, -1])
             points.append(point)
-        print('get tracking positions from tracking stream', np.stack(points, axis=0))
+        # print('get tracking positions from tracking stream', np.stack(points, axis=0))
         return np.stack(points, axis=0)
 
 
@@ -82,7 +82,7 @@ class ndi_to_stl_transform:
         for tracking_stream in imfusion_tracking_streams:
             tracking_point = self.get_tracking_positions(tracking_stream)
             point_list.append(np.mean(tracking_point, axis=0))
-        print('point list from get tracking positions after mean', point_list)
+        # print('point list from get tracking positions after mean', point_list)
         return point_list
 
 
@@ -91,7 +91,7 @@ class ndi_to_stl_transform:
             pc = np.stack(pc, axis=0)
 
         np.savetxt(filepath, pc)
-        print('filepath saving the point cloud',filepath)
+        # print('filepath saving the point cloud',filepath)
         print('pc', pc, pc.shape)
 
 
@@ -101,7 +101,7 @@ class ndi_to_stl_transform:
         pc_1 = np.asarray(np.loadtxt(p1_path))
         # pc_2 = np.asarray(np.loadtxt(p2_path)).reshape(3, -1)
         pc_2 = np.asarray(np.loadtxt(p2_path))
-        print('pc1', pc_1 , 'pc1.shape',pc_1.shape, 'pc_2',pc_2, 'pc2.shape',pc_2.shape)
+        print('point cloud 1 (average imfusion points) -->', pc_1 , '\n', 'pc1.shape-->',pc_1.shape, '\n', 'point cloud_2 (stl phantom landmarl points)-->',pc_2, '\n', 'pc2.shape','\n', pc_2.shape)
         # R, t = self.rigid_transform_3D(np.transpose(pc_2), np.transpose(pc_1))
         R, t = self.rigid_transform_3D(pc_2, pc_1)
 
@@ -110,9 +110,9 @@ class ndi_to_stl_transform:
 
     def print_imfusion_matrix(self, R, t):
         print("R=", R)
-        print('t before flatten', t)
+        # print('t before flatten', t)
         t = t.flatten()
-        print('t after flatten', t)
+        # print('t after flatten', t)
         print_string = "["
 
         for row in range(3):
@@ -124,7 +124,7 @@ class ndi_to_stl_transform:
 
         print_string += "[0, 0, 0, 1]"
 
-        print('print string', print_string)
+        print('Imfusion Transformation matrix', '\n', print_string)
 
 
     def main(self, imfusion_matrix, stl_matrix):
