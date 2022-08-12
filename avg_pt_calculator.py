@@ -3,20 +3,7 @@ os.environ['PATH'] = '/usr/include/ImFusion/Ext/Eigen/src/plugins;/usr/include/I
 
 import numpy as np
 import imfusion
-#
-# # print(os.environ['PATH'])
-#
-# os.environ['PATH'] = 'C:\\Program Files\\ImFusion\\ImFusion Suite\\Suite;C:\\Program Files\\ImFusion\\ImFusion Suite\\Suite\\plugins;' + os.environ['PATH']
-# # imfusion_suite = __import__("E:\\ImFusion\\ImFusion Suite\\Suite\\imfusion")
-# print(os.environ['PATH'])
-# import sys
-# sys.path.append('C:\\Program Files\\ImFusion\\ImFusion_Suite\\Suite;')
-# # print(sys.path)
 
-
-
-# PYTHONUNBUFFERED = 1;
-# PYTHONPATH=%PYTHONPATH%;'E:\ImFusion\ImFusion Suite\Suite';
 #########################################################
 
 #########################################################
@@ -28,6 +15,7 @@ import imfusion
 # import sys
 # sys.path.append("E:\\IFL\\Imfusionenv\\venv\\Lib\\site-packages\\imfusion\\imfusion")
 # print (sys.path)
+########################################################
 class avg_tracking_positions:
     def __call__(self, *args, **kwargs):
         return None;
@@ -38,7 +26,9 @@ class avg_tracking_positions:
         # T = stylus_transform(self)
         # print ("this is T",T.shape)
         for i in range(tracking_stream.size()):
-            calibrated_with_tool_tip = tracking_stream.matrix(i) @ T
+            if T.all() != np.eye(4).all():
+                calibrated_with_tool_tip = tracking_stream.matrix(i) @ T
+            else : calibrated_with_tool_tip = tracking_stream(i)@np.eye(4)
             # print('calibrated_with_tool_tip', calibrated_with_tool_tip)
             points.append(calibrated_with_tool_tip)
         return np.stack(points, axis=0)
