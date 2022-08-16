@@ -1,4 +1,7 @@
 import glob
+
+import numpy as np
+
 from avg_pt_calculator import *
 
 def avg_pts_matrix(imf_folder_path, avg_pts_folder, stylus_transform, transforms_folder):
@@ -12,7 +15,7 @@ def avg_pts_matrix(imf_folder_path, avg_pts_folder, stylus_transform, transforms
 
     # avg_pts_folder='/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/'
     arr_avg_pts=[]
-    for txtfilecount in range(8):
+    for txtfilecount in range(len(imf_arr)):
 
         text = open(avg_pts_folder + str(txtfilecount+1) + ".txt", 'w')
         text.close()
@@ -42,7 +45,8 @@ def avg_pts_matrix(imf_folder_path, avg_pts_folder, stylus_transform, transforms
         matrix.append(temp_mat)
 
         print('this is end of counter', point_counter)
-
+        print('matrix=', np.shape(matrix))
+    assert np.shape(matrix)== (3, 8)
     # print('matrix in main', matrix)
     # extract the matrix in correct form and export it
     tempmat1 = np.reshape(matrix, (4, 8))

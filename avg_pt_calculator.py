@@ -1,5 +1,5 @@
 import os
-os.environ['PATH'] = '/usr/include/ImFusion/Ext/Eigen/src/plugins;/usr/include/ImFusion;' + os.environ['PATH']
+os.environ['PATH'] = '/usr/include/ImFusion/ext/Eigen/src/plugins;/usr/include/ImFusion;' + os.environ['PATH']
 
 import numpy as np
 import imfusion
