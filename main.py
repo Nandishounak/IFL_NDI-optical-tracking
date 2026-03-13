@@ -1,51 +1,76 @@
+"""
+Main script for NDI Polaris Vicra to ImFusion Suite calibration.
+
+Computes the transformation matrix from NDI optical tracking coordinates
+to ImFusion Suite coordinates using 8 wire-phantom landmark points.
+"""
+
+import argparse
 import numpy as np
 
-from find_stl_to_ndi_transform import *
-from Euler_angles import *
-from glob_finder import *
-from mse_error import *
+from find_stl_to_ndi_transform import ndi_to_stl_transform
+from Euler_angles import Euler_angles
+from glob_finder import avg_pts_matrix
+from mse_error import mse_error
 
-if __name__ == '__main__':
-    #initialize imfusion packages
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Compute NDI-to-ImFusion transformation matrix."
+    )
+    parser.add_argument(
+        "--imf-folder",
+        required=True,
+        help="Path to folder containing .imf tracking files.",
+    )
+    parser.add_argument(
+        "--avg-pts-folder",
+        required=True,
+        help="Path to folder where averaged landmark points will be stored.",
+    )
+    parser.add_argument(
+        "--stylus-transform",
+        required=True,
+        help="Path to the stylus tip-offset transform .txt file.",
+    )
+    parser.add_argument(
+        "--transforms-folder",
+        required=True,
+        help="Path to folder where the output transform matrix will be stored.",
+    )
+    parser.add_argument(
+        "--stl-matrix",
+        default=None,
+        help="Path to STL landmark matrix .txt file (for rigid registration and error evaluation).",
+    )
+    return parser.parse_args()
+
+
+def main():
+    import imfusion
     imfusion.init()
 
-    imf_folder = "/home/camp/Downloads/shounak/Patient-01/" #path where imf files are stored
-    avg_pts_folder = "/home/camp/Downloads/shounak/IFL_NDI-optical-tracking/avg_pts_folder_body_phantom/" #path where the average points from different landmarks (imf --> avg pts) will be stored as separate files
+    args = parse_args()
 
-    stylus_transform = "/home/camp/Downloads/shounak/IFL_NDI-optical-tracking/stylustransform.txt" #load the path of the stylus transform (T_tool_tip)
-    # x.stylus_transform(np.array([[-18.6831], [0.0823379], [-157.464], [1]])) --> store the txt file of the pointer sych that it reads as a matrix 4x1
-    transforms_folder_path= "/home/camp/Downloads/shounak/IFL_NDI-optical-tracking/transforms_folder_body_phantom/" #enter the path where the transform matrix will be stored after extraction
-    avg_pts_matrix(imf_folder+'/*.imf', avg_pts_folder, stylus_transform, transforms_folder_path) #calling the avg_pts_matrix function to return the matrix containing the average points
+    # Step 1: Compute average tracking positions at each landmark
+    imf_glob = args.imf_folder.rstrip("/") + "/*.imf"
+    avg_pts_matrix(imf_glob, args.avg_pts_folder, args.stylus_transform, args.transforms_folder)
 
+    # Step 2 (optional): Compute rigid registration and evaluate error
+    if args.stl_matrix:
+        avg_pt_path = args.transforms_folder.rstrip("/") + "/avg_pt_matrix_3x8.txt"
+        stl_landmark_matrix = np.loadtxt(args.stl_matrix)
 
+        rt = ndi_to_stl_transform()
+        rot_mat, translation_mat = rt.main(avg_pt_path, args.stl_matrix)
 
+        angles = Euler_angles()
+        theta_x, theta_y, theta_z = angles.Euler(rot_mat)
+        print(f"Euler angles (rad): x={theta_x:.4f}, y={theta_y:.4f}, z={theta_z:.4f}")
 
-    # #now we compute the rigid transformation matrix
-    # #we have the Stl_landmark_matrix_3x8 stored as a .txt file
-    # stl_landmark_matrix = np.loadtxt("/home/nandishounak/Documents/IFL/ImFusionMhaExporter/transforms_folder/Stl_landmark_matrix_3x8.txt")
-    # print("stl matrix", stl_landmark_matrix, '\n', np.shape(stl_landmark_matrix))
-    #
-    #
-    # #compute the rigid registration
-    # rt = ndi_to_stl_transform()
-    #
-    # rot_mat, translation_mat = rt.main("/home/nandishounak/Documents/IFL/ImFusionMhaExporter/transforms_folder/avg_pt_matrix_3x8.txt",
-    #                                    "/home/nandishounak/Documents/IFL/ImFusionMhaExporter/transforms_folder/Stl_landmark_matrix_3x8.txt")
-    # # print('ndi to stl transform matrix',np.shape(rot_mat), np.shape(translation_mat))
-    #
-    # #compute the Euler angles
-    # angles = Euler_angles()
-    # theta_x, theta_y, theta_z = angles.Euler(rot_mat)
-    # print("angles in radians- x, y, z ==>", theta_x, theta_y, theta_z)
-    #
-    # #compute error
-    # Err = mse_error() #calling the error function
-    # Err.error(rot_mat, translation_mat, stl_landmark_matrix, avg_pt_matrix=np.loadtxt("/home/nandishounak/Documents/IFL/ImFusionMhaExporter/transforms_folder/avg_pt_matrix_3x8.txt"))
-    #
+        err = mse_error()
+        err.error(rot_mat, translation_mat, stl_landmark_matrix, np.loadtxt(avg_pt_path))
 
 
-
-
-
-
-
+if __name__ == "__main__":
+    main()
