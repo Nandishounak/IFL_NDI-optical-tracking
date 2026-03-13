@@ -1,80 +1,103 @@
+"""Compute averaged tracking positions from ImFusion .imf files."""
+
 import os
-os.environ['PATH'] = '/usr/include/ImFusion/ext/Eigen/src/plugins;/usr/include/ImFusion;' + os.environ['PATH']
+os.environ["PATH"] = (
+    "/usr/include/ImFusion/ext/Eigen/src/plugins;"
+    "/usr/include/ImFusion;"
+    + os.environ["PATH"]
+)
 
 import numpy as np
 import imfusion
 
-#########################################################
 
-#########################################################
-# import os
-# os.environ['PATH'] = 'C:\\Program Files\\ImFusion\\ImFusion Suite\\Suite;C:\\Program Files\\ImFusion\\ImFusion Suite\\Suite\\plugins;' + os.environ['PATH']
-# os.environ['PYTHONPATH'] = os.environ['PYTHONPATH'] + ';C:\\Program Files\\ImFusion\\ImFusion Suite\\Suite;'+'E:\\IFL\\Imfusionenv\\venv\\Lib\\site-packages\\imfusion\\imfusion'
-# # print(os.environ['PATH'])
-#
-# import sys
-# sys.path.append("E:\\IFL\\Imfusionenv\\venv\\Lib\\site-packages\\imfusion\\imfusion")
-# print (sys.path)
-########################################################
 class avg_tracking_positions:
-    def __call__(self, *args, **kwargs):
-        return None;
-    # def stylus_transform(self, T_tool_tip):
-    #     return T_tool_tip
+    """Extract and average NDI tracking positions from ImFusion streams."""
+
     def get_tracking_positions(self, tracking_stream, T):
+        """Compute calibrated tip positions for every frame in a tracking stream.
+
+        Parameters
+        ----------
+        tracking_stream : imfusion.TrackingStream
+            A single tracking stream loaded from an .imf file.
+        T : np.ndarray, shape (4, 1)
+            Stylus tip-offset transform vector.
+
+        Returns
+        -------
+        np.ndarray
+            Stacked calibrated positions, shape (N, 4, 1).
+        """
         points = []
-        # T = stylus_transform(self)
-        # print ("this is T",T.shape)
         for i in range(tracking_stream.size()):
             if T.all() != np.eye(4).all():
-                calibrated_with_tool_tip = tracking_stream.matrix(i) @ T
-            else : calibrated_with_tool_tip = tracking_stream(i)@np.eye(4)
-            # print('calibrated_with_tool_tip', calibrated_with_tool_tip)
-            points.append(calibrated_with_tool_tip)
+                calibrated = tracking_stream.matrix(i) @ T
+            else:
+                calibrated = tracking_stream(i) @ np.eye(4)
+            points.append(calibrated)
         return np.stack(points, axis=0)
 
-    def average_points_positions(self, imfusion_file_path,T):
-        imfusion_tracking_streams = imfusion.open(imfusion_file_path)
+    def average_points_positions(self, imfusion_file_path, T):
+        """Average the tracking positions across all frames per stream.
+
+        Parameters
+        ----------
+        imfusion_file_path : str
+            Path to a single .imf file.
+        T : np.ndarray, shape (4, 1)
+            Stylus tip-offset transform vector.
+
+        Returns
+        -------
+        list of np.ndarray
+            Mean position for each tracking stream in the file.
+        """
+        tracking_streams = imfusion.open(imfusion_file_path)
         point_list = []
-        for tracking_stream in imfusion_tracking_streams:
-            tracking_point = self.get_tracking_positions(tracking_stream, T)
-            # print('tracking point', tracking_point)
-            point_list.append(np.mean(tracking_point, axis=0))
-        print('point list from get tracking positions after mean', '\n', point_list)
+        for stream in tracking_streams:
+            positions = self.get_tracking_positions(stream, T)
+            point_list.append(np.mean(positions, axis=0))
         return point_list
 
     def save_point_cloud(self, pc, filepath):
+        """Save averaged point cloud to a text file.
+
+        Parameters
+        ----------
+        pc : list of np.ndarray
+            Point cloud data.
+        filepath : str
+            Output file path.
+
+        Returns
+        -------
+        list of np.ndarray
+            The saved point matrix.
+        """
         if isinstance(pc, list):
-            pc = np.stack(np.squeeze(pc, axis=0),axis=0)
-        print('filepath saving the avg points', filepath)
-        print('pc', pc, pc.shape)
-        np.savetxt(filepath, pc[0:3,:])
-        point_matrix=[]
-        point_matrix.append(pc)
-        print('point matrix',point_matrix)
+            pc = np.stack(np.squeeze(pc, axis=0), axis=0)
+        np.savetxt(filepath, pc[0:3, :])
+        point_matrix = [pc]
         return point_matrix
 
-
-
     def main(self, calibrated_phantom_point_path, averaged_points_path, T):
+        """Run the full averaging pipeline for a single landmark.
 
-        # Extracting the phantom landmark positions
-        phantom_landmarks = self.average_points_positions(calibrated_phantom_point_path,T)
-        print('phantom landmarks-->', '\n', phantom_landmarks)
-        pt_mat=self.save_point_cloud(phantom_landmarks, averaged_points_path)
+        Parameters
+        ----------
+        calibrated_phantom_point_path : str
+            Path to the .imf file for this landmark.
+        averaged_points_path : str
+            Path where the averaged point file will be saved.
+        T : np.ndarray, shape (4, 1)
+            Stylus tip-offset transform vector.
+
+        Returns
+        -------
+        list of np.ndarray
+            The saved point matrix.
+        """
+        phantom_landmarks = self.average_points_positions(calibrated_phantom_point_path, T)
+        pt_mat = self.save_point_cloud(phantom_landmarks, averaged_points_path)
         return pt_mat
-
-
-
-if __name__ == '__main__':
-    imfusion.init()
-
-
-    x = avg_tracking_positions()
-    # x.main("E:\IFL\data_0206\l1.imf", "E:\IFL\data_0206\_avgpts1_new.txt")
-    T= np.loadtxt("/home/nandishounak/Documents/IFL/ImFusionMhaExporter/stylustransform.txt").reshape(4,1)
-    # x.stylus_transform(np.array([[-18.6831], [0.0823379], [-157.464], [1]]))
-    # x.get_tracking_positions(stytra)
-    # print(stytra.shape)
-    imfpath= "/home/nandishounak/Documents/IFL/ImFusion_data/data_1905/Patient-01/data_0206/l1.imf"
-    x.main("/home/nandishounak/Documents/IFL/ImFusion_data/data_1905/Patient-01/data_0206/l1.imf", "/home/nandishounak/Documents/IFL/ImFusion_data/data_1905/Patient-01/data_0206/avg-pts-1-test.txt", T)
