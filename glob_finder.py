@@ -1,63 +1,61 @@
+"""Batch processing of .imf files to build the averaged point matrix."""
+
 import glob
-
 import numpy as np
+from avg_pt_calculator import avg_tracking_positions
 
-from avg_pt_calculator import *
 
 def avg_pts_matrix(imf_folder_path, avg_pts_folder, stylus_transform, transforms_folder):
-    # imf_folder_path = ('/home/nandishounak/Documents/IFL/ImFusionMhaExporter/imf_folder/*.imf')
-    # note for users: change the path according to the imf path
-    imf_arr = []
-    for name in sorted(glob.glob(imf_folder_path)):
-        imf_arr.append(name)
-    print(imf_arr, "Imf arr works")
+    """Process all .imf files and produce a combined 3xN average-point matrix.
 
+    Parameters
+    ----------
+    imf_folder_path : str
+        Glob pattern for .imf files (e.g. "/path/to/folder/*.imf").
+    avg_pts_folder : str
+        Directory to store per-landmark averaged point files.
+    stylus_transform : str
+        Path to the stylus tip-offset transform .txt file.
+    transforms_folder : str
+        Directory where the combined avg_pt_matrix_3x8.txt will be written.
 
-    # avg_pts_folder='/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/'
-    arr_avg_pts=[]
-    for txtfilecount in range(len(imf_arr)):
+    Returns
+    -------
+    list of str
+        Paths to the individual averaged-point files.
+    """
+    # Collect and sort .imf files
+    imf_arr = sorted(glob.glob(imf_folder_path))
+    print(f"Found {len(imf_arr)} .imf files")
 
-        text = open(avg_pts_folder + str(txtfilecount+1) + ".txt", 'w')
-        text.close()
-    # avg_pts_folder="/home/nandishounak/Documents/IFL/ImFusionMhaExporter/avg_pts_folder/"
-    for temp in sorted(glob.glob(avg_pts_folder + '/*.txt')):
-        arr_avg_pts.append(temp)
-    print(arr_avg_pts, "arr_avg_pts is working")
+    # Create empty output files for each landmark
+    avg_pts_folder = avg_pts_folder.rstrip("/") + "/"
+    arr_avg_pts = []
+    for i in range(len(imf_arr)):
+        filepath = avg_pts_folder + str(i + 1) + ".txt"
+        open(filepath, "w").close()
 
+    arr_avg_pts = sorted(glob.glob(avg_pts_folder + "*.txt"))
+    print(f"Prepared {len(arr_avg_pts)} output files")
 
-    # run the loop for extracting all the average points from imf tracking file
+    # Process each landmark
     matrix = []
-    x = avg_tracking_positions()
-    print(type(imf_arr), 'this is before counter')
+    tracker = avg_tracking_positions()
 
-    for point_counter in range(len(arr_avg_pts)):
-
-        # load the T_tool_tip transform matrix file
+    for i in range(len(arr_avg_pts)):
         T_tool_tip = np.loadtxt(stylus_transform).reshape(4, 1)
-
-        # load the paths to the imf file generated from imfusion, the new file location where the average point matrix will be stored.
-        print('this is counter', point_counter)
-
-        # initialize the average tracking positions class
-
-        temp_mat = x.main(imf_arr[point_counter],
-                          arr_avg_pts[point_counter], T_tool_tip)
+        temp_mat = tracker.main(imf_arr[i], arr_avg_pts[i], T_tool_tip)
         matrix.append(temp_mat)
 
-        print('this is end of counter', point_counter)
-        print('matrix=', np.shape(matrix))
-    assert np.shape(matrix)== (3, 8)
-    # print('matrix in main', matrix)
-    # extract the matrix in correct form and export it
+    # Reshape and export the combined matrix
     tempmat1 = np.reshape(matrix, (4, 8))
     tempmat1 = np.delete(tempmat1, 3, 1)
     tempmat1 = np.delete(tempmat1, 6, 1)
     tempmat1 = np.reshape(tempmat1, (8, 3))
     mat = tempmat1.T
-    # print('matrix after slicing', mat, 'matrix shape', np.shape(mat))
-    text = open(transforms_folder + "avg_pt_matrix_3x8.txt",
-                'w')
-    np.savetxt(text, mat)
-    text.close()
+
+    output_path = transforms_folder.rstrip("/") + "/avg_pt_matrix_3x8.txt"
+    np.savetxt(output_path, mat)
+    print(f"Saved combined matrix ({mat.shape}) to {output_path}")
 
     return arr_avg_pts
